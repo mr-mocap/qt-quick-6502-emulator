@@ -6,7 +6,6 @@ struct TXS_Implied_Expectations
 {
     uint8_t s;
     uint8_t x;
-    NZFlags flags;
 };
 
 using TXSImplied     = TXS<Implied, TXS_Implied_Expectations, 2>;
@@ -17,8 +16,6 @@ static void SetupAffectedOrUsedRegisters(InstructionExecutorTestFixture &fixture
 {
     fixture.r.stack_pointer = instruction_param.requirements.initial.s;
     fixture.r.x = instruction_param.requirements.initial.x;
-    fixture.r.SetFlag(FLAGS6502::N, instruction_param.requirements.initial.flags.n_value.expected_value);
-    fixture.r.SetFlag(FLAGS6502::Z, instruction_param.requirements.initial.flags.z_value.expected_value);
 }
 
 template<>
@@ -35,8 +32,6 @@ void RegistersAreInExpectedState(const Registers &registers,
 {
     EXPECT_THAT(registers.stack_pointer, Eq(expectations.s));
     EXPECT_THAT(registers.x, Eq(expectations.x));
-    EXPECT_THAT(registers.GetFlag(FLAGS6502::N), Eq(expectations.flags.n_value.expected_value));
-    EXPECT_THAT(registers.GetFlag(FLAGS6502::Z), Eq(expectations.flags.z_value.expected_value));
 }
 
 template<>
