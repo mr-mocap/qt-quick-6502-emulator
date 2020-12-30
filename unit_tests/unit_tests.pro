@@ -103,6 +103,7 @@ SOURCES += \
         implied_mode_TXA.cpp \
         implied_mode_TXS.cpp \
         implied_mode_TYA.cpp \
+        indirect_JMP.cpp \
         indirect_y_indexed_ADC.cpp \
         indirect_y_indexed_AND.cpp \
         indirect_y_indexed_CMP.cpp \

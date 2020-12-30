@@ -11,14 +11,15 @@ void StoreOperand(InstructionExecutorTestFixture &fixture, const Relative &instr
 void StoreOperand(InstructionExecutorTestFixture &fixture, const ZeroPageXIndexed &instruction_param);
 void StoreOperand(InstructionExecutorTestFixture &fixture, const ZeroPageYIndexed &instruction_param);
 void StoreOperand(InstructionExecutorTestFixture &fixture, const ZeroPage &instruction_param);
+void StoreOperand(InstructionExecutorTestFixture &fixture, const Indirect &instruction_param);
 
 template <typename TInstructionParamAddress, typename TInstructionParamRequirements>
 void StoreEffectiveAddress(InstructionExecutorTestFixture      &fixture,
                            const TInstructionParamAddress      &address,
                            const TInstructionParamRequirements &requirements)
 {
-    fixture.fakeMemory[address.zero_page_address    ]   = fixture.loByteOf(requirements.initial.address_to_indirect_to);
-    fixture.fakeMemory[address.zero_page_address + 1]   = fixture.hiByteOf(requirements.initial.address_to_indirect_to);
+    fixture.fakeMemory[address.indirect_address    ]   = fixture.loByteOf(requirements.initial.address_to_indirect_to);
+    fixture.fakeMemory[address.indirect_address + 1]   = fixture.hiByteOf(requirements.initial.address_to_indirect_to);
 }
 
 template <typename TInstructionParamAddress, typename TInstructionParamRequirements>
@@ -26,7 +27,7 @@ void StoreEffectiveAddressWithNoCarry(InstructionExecutorTestFixture      &fixtu
                                       const TInstructionParamAddress      &address,
                                       const TInstructionParamRequirements &requirements)
 {
-    auto effective_address = fixture.calculateZeroPageIndexedAddress(address.zero_page_address, requirements.initial.x);
+    auto effective_address = fixture.calculateZeroPageIndexedAddress(address.indirect_address, requirements.initial.x);
 
     fixture.fakeMemory[ effective_address     ] = fixture.loByteOf(requirements.initial.address_to_indirect_to);
     fixture.fakeMemory[ effective_address + 1 ] = fixture.hiByteOf(requirements.initial.address_to_indirect_to);

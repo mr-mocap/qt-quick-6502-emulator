@@ -54,7 +54,7 @@ void MemoryContainsInstruction(const InstructionExecutorTestFixture &fixture,
                                const Instruction<AbstractInstruction_e::CMP, XIndexedIndirect> &instruction)
 {
     EXPECT_THAT(fixture.fakeMemory.at( fixture.executor.registers().program_counter ),     Eq( OpcodeFor(AbstractInstruction_e::CMP, AddressMode_e::XIndexedIndirect) ));
-    EXPECT_THAT(fixture.fakeMemory.at( fixture.executor.registers().program_counter + 1 ), Eq(instruction.address.zero_page_address));
+    EXPECT_THAT(fixture.fakeMemory.at( fixture.executor.registers().program_counter + 1 ), Eq(instruction.address.indirect_address));
 }
 
 template<>
@@ -63,7 +63,7 @@ void MemoryContainsExpectedComputation(const InstructionExecutorTestFixture &fix
 {
     const auto    address_stored_in_zero_page    = instruction.requirements.initial.address_to_indirect_to;
     const uint8_t x_register    = instruction.requirements.initial.x;
-    const uint8_t zero_page_address_to_load_from = fixture.calculateZeroPageIndexedAddress(instruction.address.zero_page_address, x_register);
+    const uint8_t zero_page_address_to_load_from = fixture.calculateZeroPageIndexedAddress(instruction.address.indirect_address, x_register);
     const uint8_t value         = instruction.requirements.initial.operand;
 
     EXPECT_THAT(fixture.fakeMemory.at( zero_page_address_to_load_from     ), Eq( fixture.loByteOf(address_stored_in_zero_page) ));

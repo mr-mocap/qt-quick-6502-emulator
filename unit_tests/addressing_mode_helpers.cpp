@@ -9,12 +9,12 @@ void StoreOperand(InstructionExecutorTestFixture &fixture, const Absolute &instr
 
 void StoreOperand(InstructionExecutorTestFixture &fixture, const IndirectYIndexed &instruction_param)
 {
-    fixture.fakeMemory[instruction_param.instruction_address + 1] = instruction_param.zero_page_address;
+    fixture.fakeMemory[instruction_param.instruction_address + 1] = instruction_param.indirect_address;
 }
 
 void StoreOperand(InstructionExecutorTestFixture &fixture, const XIndexedIndirect &instruction_param)
 {
-    fixture.fakeMemory[instruction_param.instruction_address + 1] = instruction_param.zero_page_address;
+    fixture.fakeMemory[instruction_param.instruction_address + 1] = instruction_param.indirect_address;
 }
 
 void StoreOperand(InstructionExecutorTestFixture &fixture, const Relative &instruction_param)
@@ -35,4 +35,10 @@ void StoreOperand(InstructionExecutorTestFixture &fixture, const ZeroPageYIndexe
 void StoreOperand(InstructionExecutorTestFixture &fixture, const ZeroPage &instruction_param)
 {
     fixture.fakeMemory[instruction_param.instruction_address + 1] = instruction_param.zero_page_address;
+}
+
+void StoreOperand(InstructionExecutorTestFixture &fixture, const Indirect &instruction_param)
+{
+    fixture.fakeMemory[instruction_param.instruction_address + 1] = fixture.loByteOf(instruction_param.indirect_address);
+    fixture.fakeMemory[instruction_param.instruction_address + 2] = fixture.hiByteOf(instruction_param.indirect_address);
 }

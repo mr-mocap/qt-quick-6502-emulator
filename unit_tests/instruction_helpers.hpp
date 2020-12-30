@@ -105,18 +105,29 @@ struct Implied : Address
     static constexpr AddressMode_e address_mode = AddressMode_e::Implied;
 };
 
-struct Indirect : Address
+struct IndirectZeroPage : Address
 {
-    uint8_t zero_page_address;
+    uint8_t indirect_address;
 
     static constexpr uint16_t operand_byte_count = 1;
     static constexpr AddressMode_e address_mode = AddressMode_e::Indirect;
 };
 
-struct XIndexedIndirect : Indirect
+struct Indirect : Address
+{
+    constexpr Indirect &address(uint16_t a) { instruction_address = a; return *this; }
+    constexpr Indirect &indirect_addr(uint16_t v) { indirect_address = v; return *this; }
+
+    uint16_t indirect_address;
+
+    static constexpr uint16_t operand_byte_count = 2;
+    static constexpr AddressMode_e address_mode = AddressMode_e::Indirect;
+};
+
+struct XIndexedIndirect : IndirectZeroPage
 {
     constexpr XIndexedIndirect &address(uint16_t a) { instruction_address = a; return *this; }
-    constexpr XIndexedIndirect &zp_address(uint8_t v) { zero_page_address = v; return *this; }
+    constexpr XIndexedIndirect &zp_address(uint8_t v) { indirect_address = v; return *this; }
     constexpr XIndexedIndirect &x(uint8_t v) { x_register_value = v; return *this; }
 
     uint8_t x_register_value;
@@ -124,10 +135,10 @@ struct XIndexedIndirect : Indirect
     static constexpr AddressMode_e address_mode = AddressMode_e::XIndexedIndirect;
 };
 
-struct IndirectYIndexed : Indirect
+struct IndirectYIndexed : IndirectZeroPage
 {
     constexpr IndirectYIndexed &address(uint16_t a) { instruction_address = a; return *this; }
-    constexpr IndirectYIndexed &zp_address(uint8_t v) { zero_page_address = v; return *this; }
+    constexpr IndirectYIndexed &zp_address(uint8_t v) { indirect_address = v; return *this; }
     constexpr IndirectYIndexed &y(uint8_t v) { y_register_value = v; return *this; }
 
     uint8_t y_register_value;
