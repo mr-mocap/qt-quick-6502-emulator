@@ -416,6 +416,9 @@ void InstructionExecutor::clock()
         // of cycles this instruction requires before its completed
         _cycles += (additional_cycle1 & additional_cycle2);
 
+        if (additional_cycle2 > 1)
+            _cycles += additional_cycle2 - 1; // Takes care of being in BCD mode
+
         // Always set the unused status flag bit to 1
         SetFlag(U, true);
 
@@ -653,27 +656,61 @@ uint8_t InstructionExecutor::ADC()
     // Grab the data that we are adding to the accumulator
     fetch();
 
-    // Add is performed in 16-bit domain for emulation to capture any
-    // carry bit, which will exist in bit 8 of the 16-bit word
-    _temp = (uint16_t)registers().a + (uint16_t)_fetched + (uint16_t)GetFlag(C);
+    // Check for BCD mode
+    if (GetFlag(D))
+    {
+        // First add low nybbles to get the first digit...
+        uint16_t low_nybble_result = ((uint16_t)registers().a & 0x000F) +
+                                     ((uint16_t)_fetched      & 0x000F);
+        uint16_t low_nybble_carry = (low_nybble_result > 0x09) ? 0x0001 : 0x0000;
 
-    // The carry flag out exists in the high byte bit 0
-    SetFlag(C, _temp > 255);
+        // Check for the wrap-around...
+        if (low_nybble_carry)
+            low_nybble_result -= 10;
 
-    // The Zero flag is set if the result is 0
-    SetFlag(Z, (_temp & 0x00FF) == 0);
+        // Then add high nybbles to get the second digit...
+        uint16_t hi_nybble_result = ((uint16_t)registers().a >> 4) +
+                                    ((uint16_t)_fetched      >> 4) +
+                                    low_nybble_carry;
+        uint16_t hi_nybble_carry = (hi_nybble_result > 0x09) ? 0x0001 : 0x0000;
 
-    // The signed Overflow flag is set based on all that up there! :D
-    SetFlag(V, (~((uint16_t)registers().a ^ (uint16_t)_fetched) & ((uint16_t)registers().a ^ (uint16_t)_temp)) & 0x0080);
+        if (hi_nybble_carry)
+            hi_nybble_result -= 10;
 
-    // The negative flag is set to the most significant bit of the result
-    SetFlag(N, _temp & 0x80);
+        _temp = low_nybble_result | (hi_nybble_result << 4); // Splice the nybbles back together
 
-    // Load the result into the accumulator (it's 8-bit dont forget!)
-    registers().a = _temp & 0x00FF;
+        SetFlag(C, hi_nybble_carry != 0);
+        SetFlag(Z, (_temp & 0x00FF) == 0);
+        SetFlag(V, false); // No possible overflow
+        SetFlag(N, false);
+
+        // Load the result into the accumulator (it's 8-bit dont forget!)
+        registers().a = _temp & 0x00FF;
+    }
+    else
+    {
+        // Add is performed in 16-bit domain for emulation to capture any
+        // carry bit, which will exist in bit 8 of the 16-bit word
+        _temp = (uint16_t)registers().a + (uint16_t)_fetched + (uint16_t)GetFlag(C);
+
+        // The carry flag out exists in the high byte bit 0
+        SetFlag(C, _temp > 255);
+
+        // The Zero flag is set if the result is 0
+        SetFlag(Z, (_temp & 0x00FF) == 0);
+
+        // The signed Overflow flag is set based on all that up there! :D
+        SetFlag(V, (~((uint16_t)registers().a ^ (uint16_t)_fetched) & ((uint16_t)registers().a ^ (uint16_t)_temp)) & 0x0080);
+
+        // The negative flag is set to the most significant bit of the result
+        SetFlag(N, _temp & 0x80);
+
+        // Load the result into the accumulator (it's 8-bit dont forget!)
+        registers().a = _temp & 0x00FF;
+    }
 
     // This instruction has the potential to require an additional clock cycle
-    return 1;
+    return 1 + GetFlag(D);
 }
 
 // Instruction: Subtraction with Borrow In

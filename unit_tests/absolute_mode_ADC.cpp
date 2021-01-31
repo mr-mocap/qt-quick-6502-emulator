@@ -438,12 +438,12 @@ ADCAbsoluteBCD{
             .a = 0x00,
             .flags = {
                 .n_value = { .expected_value = false },
-                .z_value = { .expected_value = false },
+                .z_value = { .expected_value = true },
                 .c_value = { .expected_value = false },
                 .v_value = { .expected_value = false } },
             .addend = 0x01},
         .final = {
-            .a = 0x00,
+            .a = 0x01,
             .flags = {
                 .n_value = { .expected_value = false },
                 .z_value = { .expected_value = false },
@@ -688,7 +688,7 @@ ADCAbsoluteBCD{
             .a = 0x00,
             .flags = {
                 .n_value = { .expected_value = false },
-                .z_value = { .expected_value = false },
+                .z_value = { .expected_value = true },
                 .c_value = { .expected_value = true },
                 .v_value = { .expected_value = false } },
             .addend = 0x01
