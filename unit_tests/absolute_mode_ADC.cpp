@@ -12,8 +12,20 @@ struct ADC_Absolute_Expectations
     uint8_t   addend;
 };
 
+struct ADC_Absolute_Expectations_BCD
+{
+    constexpr ADC_Absolute_Expectations_BCD &accumulator(const uint8_t v) { a = v; return *this; }
+
+    uint8_t a;
+    NZCVFlags flags;
+
+    uint8_t   addend;
+};
+
 using ADCAbsolute     = ADC<Absolute, ADC_Absolute_Expectations, 4>;
+using ADCAbsoluteBCD  = ADC<Absolute, ADC_Absolute_Expectations_BCD, 5>;
 using ADCAbsoluteMode = ParameterizedInstructionExecutorTestFixture<ADCAbsolute>;
+using ADCAbsoluteModeBCD = ParameterizedInstructionExecutorTestFixture<ADCAbsoluteBCD>;
 
 
 static void StoreTestValueAtEffectiveAddress(InstructionExecutorTestFixture &fixture, const ADCAbsolute &instruction_param)
@@ -65,6 +77,50 @@ void MemoryContainsExpectedComputation(const InstructionExecutorTestFixture &fix
     EXPECT_THAT(fixture.fakeMemory.at( instruction.address.absolute_address ), Eq( instruction.requirements.initial.addend ));
 }
 
+
+// BCD
+static void StoreTestValueAtEffectiveAddress(InstructionExecutorTestFixture &fixture, const ADCAbsoluteBCD &instruction_param)
+{
+    fixture.fakeMemory[instruction_param.address.absolute_address       ] = instruction_param.requirements.initial.addend;
+}
+
+static void SetupAffectedOrUsedRegisters(InstructionExecutorTestFixture &fixture, const ADCAbsoluteBCD &instruction_param)
+{
+    // Let's just set the Decimal flag since this is a BCD mode test
+    fixture.r.a = instruction_param.requirements.initial.a;
+    fixture.r.SetFlag(FLAGS6502::N, instruction_param.requirements.initial.flags.n_value.expected_value);
+    fixture.r.SetFlag(FLAGS6502::Z, instruction_param.requirements.initial.flags.z_value.expected_value);
+    fixture.r.SetFlag(FLAGS6502::C, instruction_param.requirements.initial.flags.c_value.expected_value);
+    fixture.r.SetFlag(FLAGS6502::V, instruction_param.requirements.initial.flags.v_value.expected_value);
+    fixture.r.SetFlag(FLAGS6502::D, true);
+}
+
+template<>
+void LoadInstructionIntoMemoryAndSetRegistersToInitialState(      InstructionExecutorTestFixture &fixture,
+                                                            const ADCAbsoluteBCD                 &instruction_param)
+{
+    SetupRAMForInstructionsThatHaveAnEffectiveAddress(fixture, instruction_param);
+    SetupAffectedOrUsedRegisters(fixture, instruction_param);
+}
+
+template<>
+void RegistersAreInExpectedState(const Registers &registers,
+                                 const ADC_Absolute_Expectations_BCD &expectations)
+{
+    EXPECT_THAT(registers.a, Eq(expectations.a));
+    EXPECT_THAT(registers.GetFlag(FLAGS6502::N), Eq(expectations.flags.n_value.expected_value));
+    EXPECT_THAT(registers.GetFlag(FLAGS6502::Z), Eq(expectations.flags.z_value.expected_value));
+    EXPECT_THAT(registers.GetFlag(FLAGS6502::C), Eq(expectations.flags.c_value.expected_value));
+    EXPECT_THAT(registers.GetFlag(FLAGS6502::V), Eq(expectations.flags.v_value.expected_value));
+    EXPECT_TRUE(registers.GetFlag(FLAGS6502::D));
+}
+
+template<>
+void MemoryContainsExpectedComputation(const InstructionExecutorTestFixture &fixture,
+                                       const ADCAbsoluteBCD                 &instruction)
+{
+    EXPECT_THAT(fixture.fakeMemory.at( instruction.address.absolute_address ), Eq( instruction.requirements.initial.addend ));
+}
 
 static const std::vector<ADCAbsolute> ADCAbsoluteModeTestValues {
 ADCAbsolute{
@@ -372,3 +428,279 @@ TEST_P(ADCAbsoluteMode, TypicalInstructionExecution)
 INSTANTIATE_TEST_SUITE_P(AddAbsoluteAtVariousAddresses,
                          ADCAbsoluteMode,
                          testing::ValuesIn(ADCAbsoluteModeTestValues) );
+
+static const std::vector<ADCAbsoluteBCD> ADCAbsoluteModeBCDTestValues {
+ADCAbsoluteBCD{
+    // 00 + 1 = 01, C = 0, V = 0
+    Absolute().address(0x8000).value(0xA000),
+    ADCAbsoluteBCD::Requirements{
+        .initial = {
+            .a = 0x00,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01},
+        .final = {
+            .a = 0x00,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01
+        }}
+},
+ADCAbsoluteBCD{
+    // 08 + 1 = 09, C = 0, V = 0
+    Absolute().address(0x8000).value(0xA000),
+    ADCAbsoluteBCD::Requirements{
+        .initial = {
+            .a = 0x08,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01},
+        .final = {
+            .a = 0x09,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01
+        }}
+},
+ADCAbsoluteBCD{
+    // 09 + 1 = 10, C = 0, V = 0
+    Absolute().address(0x8000).value(0xA000),
+    ADCAbsoluteBCD::Requirements{
+        .initial = {
+            .a = 0x09,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01},
+        .final = {
+            .a = 0x10,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01
+        }}
+},
+ADCAbsoluteBCD{
+    // 19 + 1 = 20, C = 0, V = 0
+    Absolute().address(0x8000).value(0xA000),
+    ADCAbsoluteBCD::Requirements{
+        .initial = {
+            .a = 0x19,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = true } },
+            .addend = 0x01},
+        .final = {
+            .a = 0x20,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01
+        }}
+},
+ADCAbsoluteBCD{
+    // 29 + 1 = 30, C = 0, V = 0
+    Absolute().address(0x8000).value(0xA000),
+    ADCAbsoluteBCD::Requirements{
+        .initial = {
+            .a = 0x29,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01},
+        .final = {
+            .a = 0x30,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01
+        }}
+},
+ADCAbsoluteBCD{
+    // 39 + 1 = 40, C = 0, V = 0
+    Absolute().address(0x8000).value(0xA000),
+    ADCAbsoluteBCD::Requirements{
+        .initial = {
+            .a = 0x39,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01},
+        .final = {
+            .a = 0x40,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01
+        }}
+},
+ADCAbsoluteBCD{
+    // 49 + 1 = 50, C = 0, V = 0
+    Absolute().address(0x8000).value(0xA000),
+    ADCAbsoluteBCD::Requirements{
+        .initial = {
+            .a = 0x49,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01},
+        .final = {
+            .a = 0x50,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01
+        }}
+},
+ADCAbsoluteBCD{
+    // 59 + 1 = 60, C = 0, V = 0
+    Absolute().address(0x8000).value(0xA000),
+    ADCAbsoluteBCD::Requirements{
+        .initial = {
+            .a = 0x59,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01},
+        .final = {
+            .a = 0x60,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01
+        }}
+},
+ADCAbsoluteBCD{
+    // 69 + 1 = 70, C = 0, V = 0
+    Absolute().address(0x8000).value(0xA000),
+    ADCAbsoluteBCD::Requirements{
+        .initial = {
+            .a = 0x69,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01},
+        .final = {
+            .a = 0x70,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01
+        }}
+},
+ADCAbsoluteBCD{
+    // 79 + 1 = 80, C = 0, V = 0
+    Absolute().address(0x8000).value(0xA000),
+    ADCAbsoluteBCD::Requirements{
+        .initial = {
+            .a = 0x79,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01},
+        .final = {
+            .a = 0x80,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01
+        }}
+},
+ADCAbsoluteBCD{
+    // 89 + 1 = 90, C = 0, V = 0
+    Absolute().address(0x8000).value(0xA000),
+    ADCAbsoluteBCD::Requirements{
+        .initial = {
+            .a = 0x89,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01},
+        .final = {
+            .a = 0x90,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01
+        }}
+},
+ADCAbsoluteBCD{
+    // 99 + 1 = 00, C = 1, V = 0
+    Absolute().address(0x8000).value(0xA000),
+    ADCAbsoluteBCD::Requirements{
+        .initial = {
+            .a = 0x99,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = false },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01},
+        .final = {
+            .a = 0x00,
+            .flags = {
+                .n_value = { .expected_value = false },
+                .z_value = { .expected_value = false },
+                .c_value = { .expected_value = true },
+                .v_value = { .expected_value = false } },
+            .addend = 0x01
+        }}
+}
+};
+
+TEST_P(ADCAbsoluteModeBCD, ADCAbsoluteModeBCDTest)
+{
+    TypicalInstructionExecution(*this, GetParam());
+}
+
+INSTANTIATE_TEST_SUITE_P(AddAbsoluteAtVariousAddressesBCD,
+                         ADCAbsoluteModeBCD,
+                         testing::ValuesIn(ADCAbsoluteModeBCDTestValues) );
