@@ -6,7 +6,10 @@
 ### Processor
 ##### Implement BCD mode
 Unit testing approach:  
-Only test the BCD states themselves, leaving the other aspects of the instruction tested by other unit tests.  We will only have to test the instruction at a single location in memory for the various expected BCD states.
+Only test the BCD states themselves, leaving the other aspects of the instruction tested by other unit tests.
+We will only have to test the instruction at a single location in memory and addressing mode for the various
+expected BCD states, as we only want to test the adding capability itself.
+Roll through the numbers for each digit once: 00 - 09 (first digit), (x)9 increments to (x+1)0.  99 increments to 00.
 
 ### Qt
 * Flesh out the current Memory Page View widgets
