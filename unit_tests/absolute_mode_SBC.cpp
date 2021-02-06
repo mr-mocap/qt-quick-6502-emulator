@@ -556,7 +556,7 @@ SBCAbsoluteBCD{
             .a = 0x01,
             .flags = {
                 .n_value = { .expected_value = false },
-                .z_value = { .expected_value = true },
+                .z_value = { .expected_value = false },
                 .c_value = { .expected_value = true }, // Set the carry beforehand
                 .v_value = { .expected_value = false } },
             .operand = 0x01},
@@ -564,7 +564,7 @@ SBCAbsoluteBCD{
             .a = 0x00,
             .flags = {
                 .n_value = { .expected_value = false },
-                .z_value = { .expected_value = false },
+                .z_value = { .expected_value = true },
                 .c_value = { .expected_value = true },
                 .v_value = { .expected_value = false } },
             .operand = 0x01
@@ -619,7 +619,7 @@ SBCAbsoluteBCD{
     Absolute().address(0x8000).value(0xA000),
     SBCAbsoluteBCD::Requirements{
         .initial = {
-            .a = 0x19,
+            .a = 0x20,
             .flags = {
                 .n_value = { .expected_value = false },
                 .z_value = { .expected_value = false },
@@ -627,7 +627,7 @@ SBCAbsoluteBCD{
                 .v_value = { .expected_value = true } },
             .operand = 0x01},
         .final = {
-            .a = 0x20,
+            .a = 0x19,
             .flags = {
                 .n_value = { .expected_value = false },
                 .z_value = { .expected_value = false },
@@ -764,7 +764,7 @@ SBCAbsoluteBCD{
                 .n_value = { .expected_value = false },
                 .z_value = { .expected_value = false },
                 .c_value = { .expected_value = true },
-                .v_value = { .expected_value = false } },
+                .v_value = { .expected_value = true } },
             .operand = 0x01
         }}
 },
@@ -783,7 +783,7 @@ SBCAbsoluteBCD{
         .final = {
             .a = 0x89,
             .flags = {
-                .n_value = { .expected_value = false },
+                .n_value = { .expected_value = true },
                 .z_value = { .expected_value = false },
                 .c_value = { .expected_value = true },
                 .v_value = { .expected_value = false } },
@@ -805,7 +805,7 @@ SBCAbsoluteBCD{
         .final = {
             .a = 0x99,
             .flags = {
-                .n_value = { .expected_value = false },
+                .n_value = { .expected_value = true },
                 .z_value = { .expected_value = false },
                 .c_value = { .expected_value = false },
                 .v_value = { .expected_value = false } },

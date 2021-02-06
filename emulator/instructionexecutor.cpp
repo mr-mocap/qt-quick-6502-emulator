@@ -659,30 +659,20 @@ uint8_t InstructionExecutor::ADC()
     // Check for BCD mode
     if (GetFlag(D))
     {
-        // First add low nybbles to get the first digit...
-        uint16_t low_nybble_result = ((uint16_t)registers().a & 0x000F) +
-                                     ((uint16_t)_fetched      & 0x000F);
-        uint16_t low_nybble_carry = (low_nybble_result > 0x09) ? 0x0001 : 0x0000;
+        BCDResult result = addBCD(registers().a, _fetched);
 
-        // Check for the wrap-around...
-        if (low_nybble_carry)
-            low_nybble_result -= 10;
+        _temp = result.sum;
 
-        // Then add high nybbles to get the second digit...
-        uint16_t hi_nybble_result = ((uint16_t)registers().a >> 4) +
-                                    ((uint16_t)_fetched      >> 4) +
-                                    low_nybble_carry;
-        uint16_t hi_nybble_carry = (hi_nybble_result > 0x09) ? 0x0001 : 0x0000;
-
-        if (hi_nybble_carry)
-            hi_nybble_result -= 10;
-
-        _temp = low_nybble_result | (hi_nybble_result << 4); // Splice the nybbles back together
-
-        SetFlag(C, hi_nybble_carry != 0);
+        SetFlag(C, result.hi_nybble_carry != 0);
         SetFlag(Z, (_temp & 0x00FF) == 0);
-        SetFlag(V, false); // No possible overflow
-        SetFlag(N, false);
+
+        // The signed Overflow flag is set based on all that up there! :D
+        SetFlag(V, (~((uint16_t)registers().a ^ (uint16_t)_fetched) & ((uint16_t)registers().a ^ (uint16_t)_temp)) & 0x0080);
+
+        // The negative flag is set to the most significant bit of the result.
+        // We should technically not be able to even have the 7-bit set, but
+        // it doesn't hurt to do the same thing for both BCD and binary mode.
+        SetFlag(N, _temp & 0x80);
 
         // Load the result into the accumulator (it's 8-bit dont forget!)
         registers().a = _temp & 0x00FF;
@@ -745,17 +735,38 @@ uint8_t InstructionExecutor::SBC()
 
     // Operating in 16-bit domain to capture carry out
 
-    // We can invert the bottom 8 bits with bitwise xor
-    uint16_t value = ((uint16_t)_fetched) ^ 0x00FF;
+    // Check for BCD mode
+    if (GetFlag(D))
+    {
+        // If we want to follow the same pattern as we did for addition,
+        // then we have to take the 10's-complement before adding.
+        uint16_t value = 0x0099 - ((uint16_t)_fetched);
+        BCDResult result = addBCD(registers().a, value + (uint16_t)GetFlag(C));
 
-    // Notice this is exactly the same as addition from here!
-    _temp = (uint16_t)registers().a + value + (uint16_t)GetFlag(C);
-    SetFlag(C, _temp & 0xFF00);
-    SetFlag(Z, ((_temp & 0x00FF) == 0));
-    SetFlag(V, (_temp ^ (uint16_t)registers().a) & (_temp ^ value) & 0x0080);
-    SetFlag(N, _temp & 0x0080);
-    registers().a = _temp & 0x00FF;
-    return 1;
+        _temp = result.sum;
+
+        // Notice this is exactly the same as addition from here!
+        SetFlag(C, result.hi_nybble_carry != 0);
+        SetFlag(Z, ((_temp & 0x00FF) == 0));
+        SetFlag(V, (_temp ^ (uint16_t)registers().a) & (_temp ^ value) & 0x0080);
+        SetFlag(N, _temp & 0x0080);
+        registers().a = _temp & 0x00FF;
+    }
+    else
+    {
+        // We can invert the bottom 8 bits with bitwise xor
+        uint16_t value = ((uint16_t)_fetched) ^ 0x00FF;
+
+        // Notice this is exactly the same as addition from here!
+        _temp = (uint16_t)registers().a + value + (uint16_t)GetFlag(C);
+        SetFlag(C, _temp & 0xFF00);
+        SetFlag(Z, ((_temp & 0x00FF) == 0));
+        SetFlag(V, (_temp ^ (uint16_t)registers().a) & (_temp ^ value) & 0x0080);
+        SetFlag(N, _temp & 0x0080);
+        registers().a = _temp & 0x00FF;
+    }
+
+    return 1 + GetFlag(D);
 }
 
 // OK! Complicated operations are done! the following are much simpler
@@ -1459,4 +1470,27 @@ uint8_t InstructionExecutor::TYA()
 uint8_t InstructionExecutor::XXX()
 {
     return 0;
+}
+
+InstructionExecutor::BCDResult InstructionExecutor::addBCD(uint8_t left, uint8_t right)
+{
+    // First add low nybbles to get the first digit...
+    uint16_t low_nybble_result = ((uint16_t)left  & 0x000F) +
+                                 ((uint16_t)right & 0x000F);
+    uint16_t low_nybble_carry = (low_nybble_result > 0x09) ? 0x0001 : 0x0000;
+
+    // Check for the wrap-around...
+    if (low_nybble_carry)
+        low_nybble_result -= 10;
+
+    // Then add high nybbles to get the second digit...
+    uint16_t hi_nybble_result = ((uint16_t)left  >> 4) +
+                                ((uint16_t)right >> 4) +
+                                low_nybble_carry;
+    uint16_t hi_nybble_carry = (hi_nybble_result > 0x09) ? 0x0001 : 0x0000;
+
+    if (hi_nybble_carry)
+        hi_nybble_result -= 10;
+
+    return { static_cast<uint8_t>(low_nybble_result | (hi_nybble_result << 4)), static_cast<bool>(hi_nybble_carry) }; // Splice the nybbles back together
 }

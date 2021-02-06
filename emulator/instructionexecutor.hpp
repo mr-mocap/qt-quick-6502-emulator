@@ -154,6 +154,11 @@ protected:
     addressValueChangedDelegate  _program_counter_changed;
     addressValueChangedDelegate  _status_changed;
 
+    struct BCDResult {
+        uint8_t sum;
+        bool    hi_nybble_carry;
+    };
+
     // The read location of data can come from two sources, a memory address, or
     // its immediately available as part of the instruction. This function decides
     // depending on address mode of instruction byte
@@ -165,6 +170,8 @@ protected:
     // Convenience functions to access status register
     uint8_t GetFlag(FLAGS6502 f) const { return _registers.GetFlag(f); }
     void    SetFlag(FLAGS6502 f, bool v) { _registers.SetFlag(f, v); }
+
+    BCDResult addBCD(uint8_t left, uint8_t right);
 };
 
 #endif // INSTRUCTIONEXECUTOR_HPP
