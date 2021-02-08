@@ -172,6 +172,8 @@ protected:
     void    SetFlag(FLAGS6502 f, bool v) { _registers.SetFlag(f, v); }
 
     BCDResult addBCD(uint8_t left, uint8_t right);
+    uint8_t   complement(uint8_t input, bool decimal_mode) const { return (decimal_mode) ? 0x99 - input :
+                                                                                           0xFF ^ input; }
 };
 
 #endif // INSTRUCTIONEXECUTOR_HPP

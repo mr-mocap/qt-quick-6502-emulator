@@ -663,14 +663,13 @@ uint8_t InstructionExecutor::ADC()
 
         _temp = result.sum;
 
-        SetFlag(C, result.hi_nybble_carry != 0);
+        SetFlag(C, result.hi_nybble_carry);
         SetFlag(Z, (_temp & 0x00FF) == 0);
 
         // The signed Overflow flag is set based on all that up there! :D
         SetFlag(V, (~((uint16_t)registers().a ^ (uint16_t)_fetched) & ((uint16_t)registers().a ^ (uint16_t)_temp)) & 0x0080);
 
         // The negative flag is set to the most significant bit of the result.
-        // We should technically not be able to even have the 7-bit set, but
         // it doesn't hurt to do the same thing for both BCD and binary mode.
         SetFlag(N, _temp & 0x80);
 
@@ -738,15 +737,13 @@ uint8_t InstructionExecutor::SBC()
     // Check for BCD mode
     if (GetFlag(D))
     {
-        // If we want to follow the same pattern as we did for addition,
-        // then we have to take the 10's-complement before adding.
-        uint16_t value = 0x0099 - ((uint16_t)_fetched);
+        uint16_t value = complement(_fetched, GetFlag(D));
         BCDResult result = addBCD(registers().a, value + (uint16_t)GetFlag(C));
 
         _temp = result.sum;
 
         // Notice this is exactly the same as addition from here!
-        SetFlag(C, result.hi_nybble_carry != 0);
+        SetFlag(C, result.hi_nybble_carry);
         SetFlag(Z, ((_temp & 0x00FF) == 0));
         SetFlag(V, (_temp ^ (uint16_t)registers().a) & (_temp ^ value) & 0x0080);
         SetFlag(N, _temp & 0x0080);
@@ -754,8 +751,7 @@ uint8_t InstructionExecutor::SBC()
     }
     else
     {
-        // We can invert the bottom 8 bits with bitwise xor
-        uint16_t value = ((uint16_t)_fetched) ^ 0x00FF;
+        uint16_t value = complement(_fetched, GetFlag(D));
 
         // Notice this is exactly the same as addition from here!
         _temp = (uint16_t)registers().a + value + (uint16_t)GetFlag(C);
