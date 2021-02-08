@@ -429,6 +429,7 @@ INSTANTIATE_TEST_SUITE_P(AddAbsoluteAtVariousAddresses,
                          ADCAbsoluteMode,
                          testing::ValuesIn(ADCAbsoluteModeTestValues) );
 
+// Assume that the N, Z, and V flags are set according to regular binary values and NOT BCD values.
 static const std::vector<ADCAbsoluteBCD> ADCAbsoluteModeBCDTestValues {
 ADCAbsoluteBCD{
     // 00 + 1 = 01, C = 0, V = 0
@@ -643,10 +644,10 @@ ADCAbsoluteBCD{
         .final = {
             .a = 0x80,
             .flags = {
-                .n_value = { .expected_value = false },
+                .n_value = { .expected_value = true },
                 .z_value = { .expected_value = false },
                 .c_value = { .expected_value = false },
-                .v_value = { .expected_value = false } },
+                .v_value = { .expected_value = true } },
             .addend = 0x01
         }}
 },
@@ -665,7 +666,7 @@ ADCAbsoluteBCD{
         .final = {
             .a = 0x90,
             .flags = {
-                .n_value = { .expected_value = false },
+                .n_value = { .expected_value = true },
                 .z_value = { .expected_value = false },
                 .c_value = { .expected_value = false },
                 .v_value = { .expected_value = false } },

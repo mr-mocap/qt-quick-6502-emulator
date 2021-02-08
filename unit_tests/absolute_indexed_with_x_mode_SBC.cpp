@@ -82,6 +82,7 @@ void InstructionExecutedInExpectedClockTicks(const InstructionExecutorTestFixtur
     EXPECT_THAT(fixture.executor.clock_ticks, Eq(instruction.requirements.cycle_count + extra_cycle_count));
 }
 
+// Assume that the N, Z, and V flags are set according to regular binary values and NOT BCD values.
 static const std::vector<SBCAbsoluteXIndexed> SBCAbsoluteXIndexedModeTestValues {
 SBCAbsoluteXIndexed{
     // Beginning of a page
