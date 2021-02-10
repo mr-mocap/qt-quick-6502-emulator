@@ -17,7 +17,7 @@ Window {
     visible: true
     width: registers.width + memory_views.width + 20
     height: 1100
-    title: qsTr("Hello World")
+    title: qsTr("6502 Emulator")
 
     RamBusDeviceTableModel {
         id: zero_page_ram_table_model
@@ -63,89 +63,29 @@ Window {
         anchors.bottom: clock_control_row.top
 
         RowLayout {
-            id: status_row
+            id: registers_row
             spacing: 10
             Layout.alignment: Qt.AlignLeft | Qt.AlignRight
             Layout.fillWidth: true
-            Layout.margins: 10
+            Layout.margins: 0
 
-            Label {
-                text: "STATUS:"
-            }
-            Label {
-                text: Computer.cpu.status
-            }
-        }
-        RowLayout {
-            id: pc_row
-            Layout.alignment: Qt.AlignLeft | Qt.AlignRight
-            Layout.fillWidth: true
-            Layout.margins: 10
+            RegisterWindow {
+                id: register_window
+                color: "blue"
+                labelFont.family: "Emulogic"
+                labelFont.pointSize: 8
+                labelColor: "white"
 
-            Label {
-                text: "PC:"
-            }
-            Label {
-                text: Computer.cpu.pc
-            }
-        }
-        RowLayout {
-            id: accumulator_row
-            Layout.alignment: Qt.AlignLeft | Qt.AlignRight
-            Layout.fillWidth: true
-            Layout.margins: 10
-
-            Label {
-                text: "A:"
-            }
-            Label {
-                text: Computer.cpu.a
-            }
-        }
-        RowLayout {
-            id: x_register_row
-            Layout.alignment: Qt.AlignLeft | Qt.AlignRight
-            Layout.fillWidth: true
-            Layout.margins: 10
-
-            Label {
-                text: "X:"
-            }
-            Label {
-                text: Computer.cpu.x
-            }
-        }
-        RowLayout {
-            id: y_register_row
-            Layout.alignment: Qt.AlignLeft | Qt.AlignRight
-            Layout.fillWidth: true
-            Layout.margins: 10
-
-            Label {
-                text: "Y:"
-            }
-            Label {
-                text: Computer.cpu.y
-            }
-        }
-        RowLayout {
-            id: stack_pointer_row
-            Layout.alignment: Qt.AlignLeft | Qt.AlignRight
-            Layout.fillWidth: true
-            Layout.margins: 10
-
-            Label {
-                text: "STACK P:"
-            }
-            Label {
-                text: Computer.cpu.stackPointer
+                Layout.fillHeight: true
+                Layout.fillWidth: true
+                //Layout.preferredWidth: 650
             }
         }
         RowLayout {
             id: disassembly_row
             Layout.alignment: Qt.AlignLeft | Qt.AlignRight
             Layout.fillWidth: true
-            Layout.margins: 10
+            Layout.margins: 0
 
             Rectangle {
                 id: disassembly_rectangle
@@ -159,7 +99,7 @@ Window {
                     text: disassembly_model.visibleDisassembly
                     //font.family: "Lucida Console"
                     font.family: "Emulogic"
-                    font.pointSize: 10
+                    font.pointSize: 8
                     color: "white"
                     anchors.fill: parent
                     horizontalAlignment: Text.AlignLeft
